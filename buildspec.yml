@@ -2,15 +2,41 @@ version: 0.2
 
 env:
   variables:
+    # ── Runtime defaults ─────────────────────────────────────────
     NODE_ENV: "production"
     PORT: "3000"
-    # IMPORTANT: Define non-sensitive environment variables here.
-    # For sensitive variables (e.g., Database URLs, API Keys), 
-    # use AWS Systems Manager Parameter Store or Secrets Manager.
-    # Example:
+    # Disable Next.js telemetry (matches Dockerfile)
+    NEXT_TELEMETRY_DISABLED: "1"
+
+    # ── Build-time env stubs ─────────────────────────────────────
+    # Several modules (Supabase admin client, Razorpay/Groq route handlers)
+    # read process.env at module-load time. Without these placeholders the
+    # Next.js compiler / prerender step crashes with exit 1.
+    #
+    # These are throwaway values used ONLY during `next build`.
+    # The runtime EC2 (CodeDeploy) reads REAL values from /home/ec2-user/
+    # crossremit-app/app/.env.local (preserved by before_install.sh).
+    NEXT_PUBLIC_SUPABASE_URL:      "https://dummy.supabase.co"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "dummy-build-anon-key"
+    SUPABASE_SERVICE_ROLE_KEY:     "dummy-build-service-role-key"
+    GROQ_API_KEY:                  "dummy-build-key"
+    SERPER_API_KEY:                "dummy-build-key"
+    NEXT_PUBLIC_RAZORPAY_KEY_ID:   "rzp_test_dummy"
+    RAZORPAY_KEY_SECRET:           "dummy-build-key"
+    # When mock mode is on the build doesn't try to reach Razorpay either.
+    RAZORPAY_DEV_MOCK:             "1"
+
+    # ── How to switch to real secrets later ──────────────────────
+    # For production builds that need real NEXT_PUBLIC_* baked into the
+    # client bundle, swap the dummy lines above for Parameter Store refs:
+    #
     # parameter-store:
-    #   SUPABASE_URL: "/crossremit/prod/supabase_url"
-    #   SUPABASE_ANON_KEY: "/crossremit/prod/supabase_anon_key"
+    #   NEXT_PUBLIC_SUPABASE_URL:      "/swiftx/prod/supabase_url"
+    #   NEXT_PUBLIC_SUPABASE_ANON_KEY: "/swiftx/prod/supabase_anon_key"
+    #
+    # Server-side keys (SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY, etc.)
+    # should remain dummies at build and be supplied at *runtime* via
+    # /home/ec2-user/crossremit-app/app/.env.local on the EC2.
 
 phases:
   install:
@@ -19,30 +45,37 @@ phases:
     commands:
       - echo "Installing dependencies..."
       - cd app
-      # Clean install of dependencies
       - npm ci
+
+  pre_build:
+    commands:
+      - echo "Node version $(node -v), npm $(npm -v)"
+
   build:
     commands:
       - echo "Building Next.js application in standalone mode..."
       - npm run build
+
   post_build:
     commands:
       - echo "Preparing lightweight deployment artifact..."
       - cd ..
       - mkdir -p deployment_dist
-      
-      # Copy the standalone output which includes ONLY production dependencies
+
+      # Copy the standalone server (only prod deps included)
       - cp -a app/.next/standalone/. deployment_dist/
-      
-      # The standalone build does not include public and static assets by default.
-      # We must copy them manually to the correct path inside the artifact.
+
+      # Standalone output excludes /public and /.next/static — copy them manually
       - mkdir -p deployment_dist/.next
       - cp -r app/.next/static deployment_dist/.next/static
-      - cp -r app/public deployment_dist/public
-      
-      # Copy CodeDeploy configuration and lifecycle scripts
+      - cp -r app/public         deployment_dist/public
+
+      # CodeDeploy lifecycle config + hook scripts
       - cp appspec.yml deployment_dist/
-      - cp -r scripts deployment_dist/
+      - cp -r scripts  deployment_dist/
+
+      - echo "Artifact contents:"
+      - ls -la deployment_dist
 
 artifacts:
   base-directory: deployment_dist
