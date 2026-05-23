@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/ledger'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -23,5 +24,22 @@ export async function POST(req: NextRequest) {
     updated_at: new Date().toISOString(),
   }).eq('user_id', user.id)
 
-  return NextResponse.json({ success: true, ref: `WD_${Date.now()}` })
+  const ref = `WD_${Date.now()}`
+
+  await logEvent({
+    eventType: 'withdraw.requested',
+    actorId: user.id,
+    entity: table,
+    entityId: ref,
+    payload: {
+      amount: Number(amount),
+      currency: currency ?? 'INR',
+      bank_account_last4: String(bank_account).slice(-4),
+      ifsc,
+      ref,
+    },
+    req,
+  })
+
+  return NextResponse.json({ success: true, ref })
 }

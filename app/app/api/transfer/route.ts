@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     targetCurrency: target_currency,
     amount: Number(amount),
     note,
+    req,
   })
 
   if (error) return NextResponse.json({ error }, { status: 400 })

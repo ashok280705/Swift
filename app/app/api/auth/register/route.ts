@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/ledger'
 
 export async function POST(req: NextRequest) {
   const { email, password, full_name, phone } = await req.json()
@@ -28,6 +29,15 @@ export async function POST(req: NextRequest) {
     await adminClient.auth.admin.deleteUser(authData.user.id)
     return NextResponse.json({ error: profileErr.message }, { status: 400 })
   }
+
+  await logEvent({
+    eventType: 'auth.register',
+    actorId: authData.user.id,
+    entity: 'profiles',
+    entityId: authData.user.id,
+    payload: { rm_id: profile.rm_id, email, has_phone: !!phone },
+    req,
+  })
 
   return NextResponse.json({ rm_id: profile.rm_id, email: profile.email }, { status: 201 })
 }

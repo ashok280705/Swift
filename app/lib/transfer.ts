@@ -1,6 +1,8 @@
 import { adminClient } from '@/lib/supabase/admin'
 import { getConversionQuote } from '@/lib/forex'
+import { logEvent } from '@/lib/ledger'
 import type { TransferSummary } from '@/lib/types'
+import type { NextRequest } from 'next/server'
 
 export async function lookupRecipient(identifier: string) {
   const { data } = await adminClient
@@ -18,6 +20,7 @@ export async function initiateTransfer({
   targetCurrency,
   amount,
   note,
+  req,
 }: {
   senderId: string
   recipientIdentifier: string
@@ -25,6 +28,7 @@ export async function initiateTransfer({
   targetCurrency: string
   amount: number
   note?: string
+  req?: NextRequest
 }): Promise<{ summary: TransferSummary; error?: string }> {
   // Validate sender
   const { data: sender } = await adminClient
@@ -86,13 +90,36 @@ export async function initiateTransfer({
     }),
   ])
 
-  // Audit log
+  // Legacy audit log (kept for compat)
   await adminClient.from('audit_logs').insert({
     actor_id: sender.id,
     action: 'transfer',
     entity: 'transactions',
     entity_id: txnId,
     meta: { amount, sourceCurrency, targetCurrency, recipientId: recipient.id },
+  })
+
+  // Tamper-evident ledger entry — hash-chained to every previous event
+  await logEvent({
+    eventType: 'transfer.completed',
+    actorId: sender.id,
+    targetId: recipient.id,
+    entity: 'transactions',
+    entityId: String(txnId),
+    payload: {
+      txn_ref: txn?.txn_ref,
+      source_currency: sourceCurrency,
+      target_currency: targetCurrency,
+      source_amount: amount,
+      target_amount: converted,
+      fx_rate: rate,
+      fee_amount: fee,
+      bank_fee_rate: bankFeeRate,
+      sender_rm_id: sender.rm_id,
+      receiver_rm_id: recipient.rm_id,
+      note: note ?? null,
+    },
+    req,
   })
 
   const summary: TransferSummary = {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/ledger'
 
 async function requireAdmin(req: NextRequest) {
   const supabase = await createClient()
@@ -53,14 +54,27 @@ export async function PATCH(req: NextRequest) {
 
   if (action === 'freeze') {
     await adminClient.from('profiles').update({ is_frozen: true }).eq('id', user_id)
+    await logEvent({
+      eventType: 'admin.freeze', actorId: admin.id, targetId: user_id,
+      entity: 'profiles', entityId: user_id, payload: { user_id }, req,
+    })
     return NextResponse.json({ success: true })
   }
   if (action === 'unfreeze') {
     await adminClient.from('profiles').update({ is_frozen: false }).eq('id', user_id)
+    await logEvent({
+      eventType: 'admin.unfreeze', actorId: admin.id, targetId: user_id,
+      entity: 'profiles', entityId: user_id, payload: { user_id }, req,
+    })
     return NextResponse.json({ success: true })
   }
   if (action === 'kyc') {
     await adminClient.from('profiles').update({ kyc_status }).eq('id', user_id)
+    await logEvent({
+      eventType: kyc_status === 'verified' ? 'admin.kyc_verify' : 'admin.kyc_reject',
+      actorId: admin.id, targetId: user_id,
+      entity: 'profiles', entityId: user_id, payload: { kyc_status }, req,
+    })
     return NextResponse.json({ success: true })
   }
 

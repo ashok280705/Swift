@@ -92,9 +92,14 @@ export default function Sidebar({
               </Link>
             ))}
             {profile?.role === 'admin' && (
-              <Link href="/admin" className="sx-nav-link" data-active={pathname.startsWith('/admin')}>
-                <Shield size={16} /> Admin
-              </Link>
+              <>
+                <Link href="/admin" className="sx-nav-link" data-active={pathname === '/admin'}>
+                  <Shield size={16} /> Admin
+                </Link>
+                <Link href="/admin/ledger" className="sx-nav-link" data-active={pathname.startsWith('/admin/ledger')}>
+                  <Shield size={16} /> Ledger
+                </Link>
+              </>
             )}
           </nav>
 

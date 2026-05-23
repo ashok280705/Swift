@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/ledger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -41,6 +42,19 @@ export async function POST(req: NextRequest) {
       adminClient.from('wallets_inr').update({ balance: inrBal + amt, updated_at: new Date().toISOString() }).eq('user_id', user.id),
     ])
   }
+
+  await logEvent({
+    eventType: action === 'deposit' ? 'savings.deposit' : 'savings.withdraw',
+    actorId: user.id,
+    entity: 'savings',
+    payload: {
+      amount: amt,
+      direction: action,
+      inr_balance_before: inrBal,
+      savings_balance_before: savBal,
+    },
+    req,
+  })
 
   return NextResponse.json({ success: true })
 }

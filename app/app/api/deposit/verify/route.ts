@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import { adminClient } from '@/lib/supabase/admin'
+import { logEvent } from '@/lib/ledger'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -65,6 +66,22 @@ export async function POST(req: NextRequest) {
     method: method ?? 'upi',
     razorpay_ref: razorpay_payment_id,
     status: 'completed',
+  })
+
+  await logEvent({
+    eventType: 'deposit.completed',
+    actorId: user.id,
+    entity: 'wallets',
+    entityId: razorpay_payment_id,
+    payload: {
+      amount: Number(amount),
+      currency: currency ?? 'INR',
+      method: method ?? 'upi',
+      razorpay_order_id,
+      razorpay_payment_id,
+      // razorpay_signature deliberately excluded (sanitized)
+    },
+    req,
   })
 
   return NextResponse.json({ success: true, razorpay_ref: razorpay_payment_id })
