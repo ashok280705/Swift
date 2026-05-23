@@ -1,0 +1,60 @@
+version: 0.0
+os: linux
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AWS CodeDeploy – appspec for Swift / CrossRemit
+#
+# Deployment target: EC2 instance running Amazon Linux 2 / AL2023
+# Deploy directory:  /home/ec2-user/swift-app
+#
+# What gets deployed here is the OUTPUT of CodeBuild's deployment_dist/:
+#   server.js          ← Next.js standalone entry point
+#   .next/static/      ← Client-side JS/CSS chunks
+#   public/            ← Static assets
+#   node_modules/      ← Prod-only deps (bundled by standalone)
+#   appspec.yml        ← This file (CodeDeploy needs it at artifact root)
+#   scripts/           ← Lifecycle hook scripts
+# ─────────────────────────────────────────────────────────────────────────────
+
+files:
+  - source: /
+    destination: /home/ec2-user/swift-app
+    overwrite: true
+
+permissions:
+  - object: /home/ec2-user/swift-app
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: "644"
+  - object: /home/ec2-user/swift-app/scripts
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+    mode: "755"
+
+hooks:
+  ApplicationStop:
+    - location: scripts/application_stop.sh
+      timeout: 60
+      runas: root
+
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      timeout: 120
+      runas: root
+
+  AfterInstall:
+    - location: scripts/after_install.sh
+      timeout: 180
+      runas: root
+
+  ApplicationStart:
+    - location: scripts/application_start.sh
+      timeout: 120
+      runas: root
+
+  ValidateService:
+    - location: scripts/validate_service.sh
+      timeout: 60
+      runas: root

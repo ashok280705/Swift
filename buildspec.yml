@@ -1,0 +1,101 @@
+version: 0.2
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AWS CodeBuild – buildspec for Swift / CrossRemit (Next.js 16 standalone)
+#
+# Pipeline flow:
+#   CodePipeline → CodeBuild (this file) → S3 artifact → CodeDeploy → EC2
+#
+# Secrets strategy:
+#   • NEXT_PUBLIC_* vars are baked into the client bundle at build time.
+#     Store them in SSM Parameter Store and reference them below.
+#   • Server-side secrets (SERVICE_ROLE_KEY, GROQ, etc.) are NOT needed at
+#     build time — dummy values are used. Real values live in .env.local on
+#     the EC2 instance and are preserved across deployments by the lifecycle
+#     scripts.
+# ─────────────────────────────────────────────────────────────────────────────
+
+env:
+  variables:
+    NODE_ENV: "production"
+    PORT: "3000"
+    NEXT_TELEMETRY_DISABLED: "1"
+
+    # ── Build-time stubs (server-side keys not needed during next build) ──
+    SUPABASE_SERVICE_ROLE_KEY: "dummy-build-key"
+    GROQ_API_KEY:              "dummy-build-key"
+    SERPER_API_KEY:            "dummy-build-key"
+    RAZORPAY_KEY_SECRET:       "dummy-build-key"
+    RAZORPAY_DEV_MOCK:         "1"
+
+  # ── Uncomment and populate these in CodeBuild → Environment → SSM ────────
+  # parameter-store:
+  #   NEXT_PUBLIC_SUPABASE_URL:      "/swiftx/prod/supabase_url"
+  #   NEXT_PUBLIC_SUPABASE_ANON_KEY: "/swiftx/prod/supabase_anon_key"
+  #   NEXT_PUBLIC_RAZORPAY_KEY_ID:   "/swiftx/prod/razorpay_key_id"
+  #
+  # Until then, set them as plain env vars in the CodeBuild project console:
+  #   NEXT_PUBLIC_SUPABASE_URL      = https://vyywpyxfxdvncwnquymv.supabase.co
+  #   NEXT_PUBLIC_SUPABASE_ANON_KEY = sb_publishable_...
+  #   NEXT_PUBLIC_RAZORPAY_KEY_ID   = rzp_test_...
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "=== Installing dependencies ==="
+      - cd app
+      - npm ci --prefer-offline
+
+  pre_build:
+    commands:
+      - echo "=== Pre-build checks ==="
+      - node --version
+      - npm --version
+      - echo "Build started at $(date)"
+
+  build:
+    commands:
+      - echo "=== Building Next.js application (standalone mode) ==="
+      # Still inside app/ from the install phase
+      - npm run build
+
+  post_build:
+    commands:
+      - echo "=== Assembling deployment artifact ==="
+      # Go back to repo root
+      - cd ..
+
+      # Clean slate
+      - rm -rf deployment_dist
+      - mkdir -p deployment_dist
+
+      # ── Core: standalone server (includes only prod node_modules) ──
+      - cp -a app/.next/standalone/. deployment_dist/
+
+      # ── Static assets (standalone output intentionally excludes these) ──
+      - mkdir -p deployment_dist/.next
+      - cp -r app/.next/static  deployment_dist/.next/static
+      - cp -r app/public        deployment_dist/public
+
+      # ── CodeDeploy config + lifecycle scripts ──
+      - cp    appspec.yml       deployment_dist/
+      - cp -r scripts           deployment_dist/
+
+      # ── Sanity check ──
+      - echo "=== Artifact contents ==="
+      - ls -la deployment_dist/
+      - echo "server.js present:" && ls deployment_dist/server.js
+      - echo "Build finished at $(date)"
+
+artifacts:
+  base-directory: deployment_dist
+  files:
+    - "**/*"
+  discard-paths: no
+
+cache:
+  paths:
+    # Cache npm packages between builds to speed up installs
+    - app/node_modules/**/*

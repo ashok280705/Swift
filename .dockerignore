@@ -1,0 +1,34 @@
+# Dependencies (reinstalled inside Docker)
+**/node_modules
+
+# Next.js build output (built inside Docker)
+**/.next
+
+# Git
+.git
+.gitignore
+
+# Env files (secrets — never bake into image)
+**/.env
+**/.env.*
+!**/.env.example
+
+# OS / editor
+.DS_Store
+**/*.log
+npm-debug.log*
+
+# Docs
+README.md
+README-AWS.md
+
+# Docker files themselves (not needed inside the image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# CI/CD (not needed inside the image)
+buildspec.yml
+appspec.yml
+scripts/
+deployment_dist/

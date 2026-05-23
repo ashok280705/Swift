@@ -1,0 +1,17 @@
+# Secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+deployment_dist/
+app/.next/
+app/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
