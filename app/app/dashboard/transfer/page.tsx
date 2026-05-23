@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CheckCircle2, AlertTriangle, ArrowDown, User2, ShieldCheck, Send } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 type Quote = {
   rate: number
@@ -22,6 +23,7 @@ type Summary = {
 const CURRENCIES = ['INR', 'USD', 'AED', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'HKD', 'SGD', 'SAR', 'QAR', 'KWD', 'MYR', 'THB', 'PHP', 'IDR', 'PKR', 'BDT', 'LKR', 'NPR', 'EGP', 'NGN', 'KES', 'ZAR', 'BRL', 'MXN', 'TRY', 'RUB', 'KRW', 'TWD', 'VND', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'RON', 'BGN', 'UAH', 'ILS', 'JOD', 'OMR', 'BHD', 'NZD', 'CLP', 'COP', 'PEN', 'ARS', 'GHS', 'TZS']
 
 export default function TransferPage() {
+  const { t } = useLang()
   const [form, setForm] = useState({
     recipient: '', source_currency: 'INR', target_currency: 'USD', amount: '', note: ''
   })
@@ -78,9 +80,9 @@ export default function TransferPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <header className="mb-8">
-        <p className="sx-h-eyebrow">Global transfer</p>
-        <h1 className="sx-h-title mt-2">Send money worldwide</h1>
-        <p className="sx-h-sub mt-1">Real-time rates · transparent fees · 60-second delivery.</p>
+        <p className="sx-h-eyebrow">{t('transfer.eyebrow')}</p>
+        <h1 className="sx-h-title mt-2">{t('transfer.title')}</h1>
+        <p className="sx-h-sub mt-1">{t('transfer.desc')}</p>
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-6">

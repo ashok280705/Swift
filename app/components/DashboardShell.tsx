@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Sidebar from '@/components/Sidebar'
+import { useLang } from '@/lib/i18n'
 
 /**
  * AppFrame — top-nav + content workspace for SwiftX.
@@ -8,6 +9,7 @@ import Sidebar from '@/components/Sidebar'
  */
 export default function DashboardShell({ profile, children }: { profile: any; children: React.ReactNode }) {
   const [mobileMenu, setMobileMenu] = useState(false)
+  const { t } = useLang()
 
   useEffect(() => {
     const onResize = () => { if (window.innerWidth >= 1024) setMobileMenu(false) }
@@ -30,8 +32,8 @@ export default function DashboardShell({ profile, children }: { profile: any; ch
       <footer className="border-t mt-auto" style={{ borderColor: 'var(--sx-line)' }}>
         <div className="mx-auto max-w-[1380px] px-4 sm:px-6 lg:px-10 py-6 flex flex-wrap items-center justify-between gap-3 text-xs"
              style={{ color: 'var(--sx-ink-3)' }}>
-          <span>© {new Date().getFullYear()} SwiftX — Borderless money movement.</span>
-          <span className="flex items-center gap-2"><span className="sx-pulse-dot" /> Network healthy · v1.0</span>
+          <span>© {new Date().getFullYear()} SwiftX — {t('footer.tagline')}</span>
+          <span className="flex items-center gap-2"><span className="sx-pulse-dot" /> {t('common.systemshealthy')} · v1.0</span>
         </div>
       </footer>
     </div>

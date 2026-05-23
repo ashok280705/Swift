@@ -5,10 +5,12 @@ import { format } from 'date-fns'
 import Link from 'next/link'
 import {
   ArrowUpRight, ArrowDownLeft, ArrowDownToLine, ArrowUpFromLine, PiggyBank,
-  Send, Activity, Brain,
+  Send, Activity, Brain, ScanLine,
 } from 'lucide-react'
 import CopyRmId from '@/components/CopyRmId'
 import WalletCards from '@/components/WalletCards'
+import { Trans } from '@/lib/i18n'
+import Greeting from '@/components/Greeting'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -29,9 +31,6 @@ export default async function DashboardPage() {
   ])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
-  const today = new Date()
-  const hour = today.getHours()
-  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="space-y-10">
@@ -40,25 +39,25 @@ export default async function DashboardPage() {
         <div className="grid md:grid-cols-[1.5fr_1fr] gap-8 items-center">
           <div>
             <p className="sx-h-eyebrow" style={{ color: 'var(--sx-primary)' }}>
-              {greet}, {firstName}
+              <Greeting name={firstName} />
             </p>
             <h1 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight" style={{ color: 'var(--sx-ink)' }}>
-              Your borderless wallet,
-              <br />ready when you are.
+              <Trans tKey="dash.hero.title1" />
+              <br /><Trans tKey="dash.hero.title2" />
             </h1>
             <p className="mt-3 max-w-lg text-base" style={{ color: 'var(--sx-ink-2)' }}>
-              Move money worldwide, grow your savings, and track every cent — all in one workspace.
+              <Trans tKey="dash.hero.desc" />
             </p>
 
             <div className="mt-6 flex items-center flex-wrap gap-3">
               <Link href="/dashboard/transfer" className="sx-btn sx-btn-primary">
-                <Send size={15} /> Send money
+                <Send size={15} /> <Trans tKey="dash.hero.send" />
               </Link>
               <Link href="/dashboard/deposit" className="sx-btn sx-btn-ghost">
-                <ArrowDownToLine size={15} /> Deposit
+                <ArrowDownToLine size={15} /> <Trans tKey="dash.hero.deposit" />
               </Link>
               <Link href="/dashboard/forex-predictor" className="sx-btn sx-btn-ghost">
-                <Brain size={15} /> Rate intel
+                <Brain size={15} /> <Trans tKey="dash.hero.rateintel" />
               </Link>
             </div>
           </div>
@@ -66,7 +65,7 @@ export default async function DashboardPage() {
           {/* SwiftX ID card */}
           <div className="sx-glass p-5 md:p-6 self-end relative">
             <div className="flex items-center justify-between">
-              <span className="sx-pill">SwiftX ID</span>
+              <span className="sx-pill"><Trans tKey="dash.id.label" /></span>
               <CopyRmId rmId={profile?.rm_id ?? ''} />
             </div>
             <p className="mt-4 font-mono font-extrabold text-2xl tracking-[0.18em]"
@@ -74,7 +73,7 @@ export default async function DashboardPage() {
               {profile?.rm_id}
             </p>
             <p className="mt-2 text-xs" style={{ color: 'var(--sx-ink-3)' }}>
-              Your global handle. Share to receive money in any supported currency — instantly.
+              <Trans tKey="dash.id.desc" />
             </p>
           </div>
         </div>
@@ -89,14 +88,14 @@ export default async function DashboardPage() {
 
       {/* Quick action tiles */}
       <section>
-        <p className="sx-h-eyebrow mb-3">Quick actions</p>
+        <p className="sx-h-eyebrow mb-3"><Trans tKey="dash.qa.title" /></p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { href: '/dashboard/transfer', label: 'Send Money',  desc: 'Pay anyone, anywhere',   icon: ArrowUpRight,    accent: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)' },
-            { href: '/dashboard/deposit',  label: 'Add Funds',   desc: 'Top up via UPI / QR',    icon: ArrowDownToLine, accent: 'linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)' },
-            { href: '/dashboard/withdraw', label: 'Withdraw',    desc: 'Send to bank account',   icon: ArrowUpFromLine, accent: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' },
-            { href: '/dashboard/savings',  label: 'Vault',       desc: 'Earn 6.5% APY',          icon: PiggyBank,       accent: 'linear-gradient(135deg, #7c3aed 0%, #c084fc 100%)' },
-          ].map(({ href, label, desc, icon: Icon, accent }) => (
+            { href: '/dashboard/pay',      titleK: 'dash.qa.scan.title',     descK: 'dash.qa.scan.desc',     icon: ScanLine,        accent: 'linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%)' },
+            { href: '/dashboard/transfer', titleK: 'dash.qa.send.title',     descK: 'dash.qa.send.desc',     icon: ArrowUpRight,    accent: 'linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)' },
+            { href: '/dashboard/deposit',  titleK: 'dash.qa.deposit.title',  descK: 'dash.qa.deposit.desc',  icon: ArrowDownToLine, accent: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' },
+            { href: '/dashboard/withdraw', titleK: 'dash.qa.withdraw.title', descK: 'dash.qa.withdraw.desc', icon: ArrowUpFromLine, accent: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' },
+          ].map(({ href, titleK, descK, icon: Icon, accent }) => (
             <Link key={href} href={href}
               className="sx-card p-5 group flex flex-col gap-3 hover:-translate-y-0.5 transition-transform">
               <span className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-white"
@@ -104,12 +103,12 @@ export default async function DashboardPage() {
                 <Icon size={18} />
               </span>
               <div>
-                <p className="font-semibold text-base" style={{ color: 'var(--sx-ink)' }}>{label}</p>
-                <p className="text-xs" style={{ color: 'var(--sx-ink-3)' }}>{desc}</p>
+                <p className="font-semibold text-base" style={{ color: 'var(--sx-ink)' }}><Trans tKey={titleK} /></p>
+                <p className="text-xs" style={{ color: 'var(--sx-ink-3)' }}><Trans tKey={descK} /></p>
               </div>
               <span className="text-xs font-semibold inline-flex items-center gap-1 mt-auto"
                     style={{ color: 'var(--sx-primary)' }}>
-                Open <ArrowUpRight size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <Trans tKey="dash.qa.open" /> <ArrowUpRight size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </span>
             </Link>
           ))}
@@ -126,11 +125,11 @@ export default async function DashboardPage() {
                     style={{ background: 'var(--sx-primary-soft)', color: 'var(--sx-primary)' }}>
                 <Activity size={15} />
               </span>
-              <h3 className="font-bold text-base" style={{ color: 'var(--sx-ink)' }}>Recent activity</h3>
+              <h3 className="font-bold text-base" style={{ color: 'var(--sx-ink)' }}><Trans tKey="dash.activity.title" /></h3>
             </div>
             <Link href="/dashboard/history" className="text-xs font-semibold hover:underline"
                   style={{ color: 'var(--sx-primary)' }}>
-              View all →
+              <Trans tKey="dash.activity.viewall" />
             </Link>
           </div>
 
@@ -141,13 +140,13 @@ export default async function DashboardPage() {
                 <Send size={22} />
               </div>
               <p className="text-sm font-medium" style={{ color: 'var(--sx-ink-2)' }}>
-                No transfers yet
+                <Trans tKey="dash.activity.none" />
               </p>
               <p className="text-xs mt-1" style={{ color: 'var(--sx-ink-3)' }}>
-                Make your first move — try sending to a friend.
+                <Trans tKey="dash.activity.cta" />
               </p>
               <Link href="/dashboard/transfer" className="sx-btn sx-btn-secondary mt-4 inline-flex">
-                Start a transfer
+                <Trans tKey="dash.activity.start" />
               </Link>
             </div>
           ) : (
@@ -204,31 +203,31 @@ export default async function DashboardPage() {
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full"
                  style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)', opacity: 0.10 }} />
             <span className="sx-pill sx-pill-violet">
-              <Brain size={12} /> AI Insight
+              <Brain size={12} /> <Trans tKey="dash.insight.smart.eyebrow" />
             </span>
             <h4 className="font-bold mt-3" style={{ color: 'var(--sx-ink)' }}>
-              Smart timing
+              <Trans tKey="dash.insight.smart.title" />
             </h4>
             <p className="text-sm mt-1.5" style={{ color: 'var(--sx-ink-2)' }}>
-              Forex predictor estimates a favorable INR→USD window in the next 7 days. Worth checking before your next transfer.
+              <Trans tKey="dash.insight.smart.body" />
             </p>
             <Link href="/dashboard/forex-predictor" className="sx-btn sx-btn-ghost mt-4 text-xs">
-              See forecast <ArrowUpRight size={12} />
+              <Trans tKey="dash.insight.smart.cta" /> <ArrowUpRight size={12} />
             </Link>
           </div>
 
           <div className="sx-card p-6">
             <span className="sx-pill sx-pill-mint">
-              <PiggyBank size={12} /> Vault
+              <PiggyBank size={12} /> <Trans tKey="dash.insight.vault.eyebrow" />
             </span>
             <h4 className="font-bold mt-3" style={{ color: 'var(--sx-ink)' }}>
-              Earn 6.5% APY
+              <Trans tKey="dash.insight.vault.title" />
             </h4>
             <p className="text-sm mt-1.5" style={{ color: 'var(--sx-ink-2)' }}>
-              Idle balances in SwiftX Vault compound daily — no lock-in, withdraw any time.
+              <Trans tKey="dash.insight.vault.body" />
             </p>
             <Link href="/dashboard/savings" className="sx-btn sx-btn-primary mt-4 text-xs">
-              Open vault <ArrowUpRight size={12} />
+              <Trans tKey="dash.insight.vault.cta" /> <ArrowUpRight size={12} />
             </Link>
           </div>
         </div>

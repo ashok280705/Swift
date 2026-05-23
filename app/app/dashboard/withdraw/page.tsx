@@ -1,8 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { CheckCircle2, AlertTriangle, ShieldCheck, Building2, ArrowRight } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 export default function WithdrawPage() {
+  const { t } = useLang()
   const [balances, setBalances] = useState({ inr: 0, usd: 0 })
   const [form, setForm] = useState({ amount: '', currency: 'INR', bank_account: '', ifsc: '' })
   const [loading, setLoading] = useState(false)
@@ -40,9 +42,9 @@ export default function WithdrawPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <header className="mb-8">
-        <p className="sx-h-eyebrow">Withdraw</p>
-        <h1 className="sx-h-title mt-2">Cash out to your bank</h1>
-        <p className="sx-h-sub mt-1">Settles within 1–2 business days. End-to-end encrypted.</p>
+        <p className="sx-h-eyebrow">{t('withdraw.eyebrow')}</p>
+        <h1 className="sx-h-title mt-2">{t('withdraw.title')}</h1>
+        <p className="sx-h-sub mt-1">{t('withdraw.desc')}</p>
       </header>
 
       {success ? (

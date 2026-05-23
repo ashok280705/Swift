@@ -16,6 +16,7 @@ export type LedgerEvent =
   | 'deposit.completed'
   | 'withdraw.requested'
   | 'transfer.completed'
+  | 'merchant.payment'
   | 'savings.deposit'
   | 'savings.withdraw'
   | 'admin.freeze'

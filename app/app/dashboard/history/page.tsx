@@ -3,6 +3,7 @@ import { adminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { format } from 'date-fns'
 import { ArrowUpRight, ArrowDownLeft, Activity, FileSpreadsheet } from 'lucide-react'
+import { Trans } from '@/lib/i18n'
 
 const STATUS_PILL: Record<string, string> = {
   completed: 'sx-pill-mint',
@@ -32,8 +33,8 @@ export default async function HistoryPage() {
     <div>
       <header className="mb-8 flex items-end justify-between flex-wrap gap-4">
         <div>
-          <p className="sx-h-eyebrow">Activity log</p>
-          <h1 className="sx-h-title mt-2">Every move you've made</h1>
+          <p className="sx-h-eyebrow"><Trans tKey="history.eyebrow" /></p>
+          <h1 className="sx-h-title mt-2"><Trans tKey="history.title" /></h1>
           <p className="sx-h-sub mt-1">{txns?.length ?? 0} most-recent transactions across your wallets.</p>
         </div>
       </header>
@@ -41,17 +42,17 @@ export default async function HistoryPage() {
       {/* Stat strip */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Sent',      value: sent,      icon: ArrowUpRight,   accent: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' },
-          { label: 'Received',  value: received,  icon: ArrowDownLeft,  accent: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' },
-          { label: 'Completed', value: completed, icon: Activity,       accent: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' },
-        ].map(({ label, value, icon: Icon, accent }) => (
-          <div key={label} className="sx-card p-5 flex items-center gap-3">
+          { tKey: 'history.sent',      value: sent,      icon: ArrowUpRight,   accent: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)' },
+          { tKey: 'history.received',  value: received,  icon: ArrowDownLeft,  accent: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' },
+          { tKey: 'history.completed', value: completed, icon: Activity,       accent: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)' },
+        ].map(({ tKey, value, icon: Icon, accent }) => (
+          <div key={tKey} className="sx-card p-5 flex items-center gap-3">
             <span className="w-10 h-10 rounded-xl inline-flex items-center justify-center text-white"
                   style={{ background: accent }}>
               <Icon size={16} />
             </span>
             <div>
-              <p className="text-xs" style={{ color: 'var(--sx-ink-3)' }}>{label}</p>
+              <p className="text-xs" style={{ color: 'var(--sx-ink-3)' }}><Trans tKey={tKey} /></p>
               <p className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--sx-ink)' }}>{value}</p>
             </div>
           </div>

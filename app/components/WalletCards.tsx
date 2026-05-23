@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { PiggyBank, RefreshCw, Globe, ArrowUpRight } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 const COUNTRY_CURRENCY: Record<string, { code: string; symbol: string; flag: string; name: string }> = {
   US: { code: 'USD', symbol: '$', flag: '🇺🇸', name: 'United States' },
@@ -38,6 +39,7 @@ const COUNTRY_CURRENCY: Record<string, { code: string; symbol: string; flag: str
 interface Props { inrBalance: number; usdBalance: number; savingsBalance: number }
 
 export default function WalletCards({ inrBalance, usdBalance, savingsBalance }: Props) {
+  const { t } = useLang()
   const [selectedCountry, setSelectedCountry] = useState('US')
   const [rate, setRate] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
@@ -53,36 +55,9 @@ export default function WalletCards({ inrBalance, usdBalance, savingsBalance }: 
   }, [selectedCountry, country.code])
 
   const wallets = [
-    {
-      key: 'inr',
-      title: 'INR Balance',
-      flag: '🇮🇳',
-      symbol: '₹',
-      amount: inrBalance,
-      base: 'INR',
-      tone: 'indigo',
-      accent: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)',
-    },
-    {
-      key: 'usd',
-      title: 'USD Balance',
-      flag: '🇺🇸',
-      symbol: '$',
-      amount: usdBalance,
-      base: 'USD',
-      tone: 'cyan',
-      accent: 'linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)',
-    },
-    {
-      key: 'sav',
-      title: 'Savings Vault',
-      flag: '💎',
-      symbol: '₹',
-      amount: savingsBalance,
-      base: 'INR',
-      tone: 'violet',
-      accent: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-    },
+    { key: 'inr', title: t('wallets.inr'),     flag: '🇮🇳', symbol: '₹', amount: inrBalance,     base: 'INR', tone: 'indigo', accent: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)' },
+    { key: 'usd', title: t('wallets.usd'),     flag: '🇺🇸', symbol: '$', amount: usdBalance,     base: 'USD', tone: 'cyan',   accent: 'linear-gradient(135deg, #0891b2 0%, #22d3ee 100%)' },
+    { key: 'sav', title: t('wallets.savings'), flag: '💎', symbol: '₹', amount: savingsBalance, base: 'INR', tone: 'violet', accent: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' },
   ]
 
   return (
@@ -90,15 +65,15 @@ export default function WalletCards({ inrBalance, usdBalance, savingsBalance }: 
       {/* Currency selector strip */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <span className="sx-h-eyebrow">Your Wallets</span>
+          <span className="sx-h-eyebrow">{t('wallets.eyebrow')}</span>
           <span className="sx-pill sx-pill-mint">
-            <span className="sx-pulse-dot" style={{ width: 6, height: 6 }} /> live
+            <span className="sx-pulse-dot" style={{ width: 6, height: 6 }} /> {t('common.live')}
           </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border"
              style={{ borderColor: 'var(--sx-line)', background: 'var(--sx-panel)' }}>
           <Globe size={14} style={{ color: 'var(--sx-ink-3)' }} />
-          <span className="text-xs font-medium" style={{ color: 'var(--sx-ink-3)' }}>Show in</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--sx-ink-3)' }}>{t('wallets.showin')}</span>
           <select
             value={selectedCountry}
             onChange={e => setSelectedCountry(e.target.value)}

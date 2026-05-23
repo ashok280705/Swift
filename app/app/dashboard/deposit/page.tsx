@@ -1,8 +1,9 @@
 'use client'
 import { useState } from 'react'
 import {
-  CheckCircle2, QrCode, Smartphone, ShieldCheck, ArrowRight, AlertTriangle,
+  CheckCircle2, QrCode, Smartphone, ShieldCheck, ArrowRight, AlertTriangle, X,
 } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 const QUICK_AMOUNTS = [500, 1000, 5000, 10000]
 const RAZORPAY_SCRIPT_SRC = 'https://checkout.razorpay.com/v1/checkout.js'
@@ -11,6 +12,13 @@ declare global {
   interface Window {
     Razorpay?: any
   }
+}
+
+/** Reads a Response and returns JSON if possible, else `{ error: <text> }`. */
+async function safeJson(res: Response): Promise<any> {
+  const text = await res.text().catch(() => '')
+  if (!text) return null
+  try { return JSON.parse(text) } catch { return { error: text.slice(0, 200) } }
 }
 
 function loadRazorpay(): Promise<void> {
@@ -32,13 +40,42 @@ function loadRazorpay(): Promise<void> {
   })
 }
 
+type MockOrder = { mock: true; order_id: string; amount: number; currency: string; key_id: string }
+
 export default function DepositPage() {
+  const { t } = useLang()
   const [method, setMethod] = useState<'upi' | 'qr'>('upi')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('INR')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [mockOrder, setMockOrder] = useState<MockOrder | null>(null)
+  const [mockPaying, setMockPaying] = useState(false)
+
+  async function completeMockPayment() {
+    if (!mockOrder) return
+    setMockPaying(true)
+    const payment_id = `pay_MOCK_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+    const vRes = await fetch('/api/deposit/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        razorpay_order_id: mockOrder.order_id,
+        razorpay_payment_id: payment_id,
+        razorpay_signature: 'mock',
+        amount: Number(amount),
+        currency,
+        method,
+      }),
+    })
+    const vData = await safeJson(vRes)
+    setMockPaying(false)
+    if (!vRes.ok) { setError(vData?.error || 'Mock payment failed'); setMockOrder(null); return }
+    setSuccess(vData.razorpay_ref)
+    setMockOrder(null)
+    setAmount('')
+  }
 
   async function handleDeposit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,8 +90,15 @@ export default function DepositPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: Number(amount), currency }),
       })
-      const order = await orderRes.json()
-      if (!orderRes.ok) throw new Error(order.error || 'Could not create order')
+      const order = await safeJson(orderRes)
+      if (!orderRes.ok) throw new Error(order?.error || `Could not create order (HTTP ${orderRes.status})`)
+
+      // Dev-mock branch: server told us to skip Razorpay entirely.
+      if (order?.mock) {
+        setMockOrder(order)
+        setLoading(false)
+        return
+      }
 
       // 2. Load the Razorpay checkout SDK
       await loadRazorpay()
@@ -88,9 +132,9 @@ export default function DepositPage() {
               method,
             }),
           })
-          const vData = await vRes.json()
+          const vData = await safeJson(vRes)
           if (!vRes.ok) {
-            setError(vData.error || 'Payment verification failed')
+            setError(vData?.error || `Payment verification failed (HTTP ${vRes.status})`)
             setLoading(false)
             return
           }
@@ -114,10 +158,22 @@ export default function DepositPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      {mockOrder && (
+        <MockCheckoutModal
+          orderId={mockOrder.order_id}
+          amount={Number(amount)}
+          currency={currency}
+          method={method}
+          paying={mockPaying}
+          onPay={completeMockPayment}
+          onClose={() => setMockOrder(null)}
+        />
+      )}
+
       <header className="mb-8">
-        <p className="sx-h-eyebrow">Add funds</p>
-        <h1 className="sx-h-title mt-2">Top up your wallet</h1>
-        <p className="sx-h-sub mt-1">Pay securely with UPI, cards, netbanking or wallets — powered by Razorpay.</p>
+        <p className="sx-h-eyebrow">{t('deposit.eyebrow')}</p>
+        <h1 className="sx-h-title mt-2">{t('deposit.title')}</h1>
+        <p className="sx-h-sub mt-1">{t('deposit.desc')}</p>
       </header>
 
       {success ? (
@@ -128,7 +184,7 @@ export default function DepositPage() {
           <div className="space-y-6">
             <div className="sx-card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-sm" style={{ color: 'var(--sx-ink)' }}>Amount</h3>
+                <h3 className="font-bold text-sm" style={{ color: 'var(--sx-ink)' }}>{t('common.amount')}</h3>
                 <span className="sx-pill">{currency}</span>
               </div>
 
@@ -172,9 +228,9 @@ export default function DepositPage() {
             </div>
 
             <div className="sx-card p-6">
-              <h3 className="font-bold text-sm mb-1" style={{ color: 'var(--sx-ink)' }}>Preferred method</h3>
+              <h3 className="font-bold text-sm mb-1" style={{ color: 'var(--sx-ink)' }}>{t('deposit.method')}</h3>
               <p className="text-xs mb-4" style={{ color: 'var(--sx-ink-3)' }}>
-                You can still switch to any method inside the Razorpay window.
+                {t('deposit.methodhint')}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {([['upi', 'UPI', Smartphone], ['qr', 'QR / cards / netbanking', QrCode]] as const).map(([val, label, Icon]) => {
@@ -270,6 +326,59 @@ function SuccessCard({ reference, onAgain }: { reference: string; onAgain: () =>
       <button onClick={onAgain} className="sx-btn sx-btn-primary w-full mt-6">
         Make another deposit
       </button>
+    </div>
+  )
+}
+
+function MockCheckoutModal({
+  orderId, amount, currency, method, paying, onPay, onClose,
+}: {
+  orderId: string; amount: number; currency: string; method: string;
+  paying: boolean; onPay: () => void; onClose: () => void;
+}) {
+  const sym = currency === 'USD' ? '$' : '₹'
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(8px)' }}>
+      <div className="sx-card max-w-md w-full p-7 relative sx-fade-up">
+        <button onClick={onClose} disabled={paying}
+          className="absolute right-3 top-3 p-2 rounded-lg hover:bg-black/5 disabled:opacity-40"
+          style={{ color: 'var(--sx-ink-3)' }} aria-label="Close">
+          <X size={16} />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <span className="w-9 h-9 rounded-md inline-flex items-center justify-center text-xs font-bold text-white"
+                style={{ background: '#0258A6' }}>R</span>
+          <div>
+            <p className="text-sm font-bold" style={{ color: 'var(--sx-ink)' }}>Razorpay Checkout</p>
+            <span className="sx-pill sx-pill-amber">Dev mock</span>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-[11px] uppercase tracking-wider font-bold" style={{ color: 'var(--sx-ink-3)' }}>Pay to SwiftX</p>
+          <p className="text-5xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--sx-ink)' }}>
+            {sym}{amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+
+        <div className="mt-6 rounded-xl p-3 text-xs space-y-1.5"
+             style={{ background: 'var(--sx-panel-2)', border: '1px solid var(--sx-line)' }}>
+          <div className="flex justify-between"><span style={{ color: 'var(--sx-ink-3)' }}>Order ID</span>          <span className="font-mono" style={{ color: 'var(--sx-ink-2)' }}>{orderId.slice(0, 28)}…</span></div>
+          <div className="flex justify-between"><span style={{ color: 'var(--sx-ink-3)' }}>Method</span>            <span className="font-semibold capitalize" style={{ color: 'var(--sx-ink-2)' }}>{method}</span></div>
+          <div className="flex justify-between"><span style={{ color: 'var(--sx-ink-3)' }}>Currency</span>          <span className="font-semibold" style={{ color: 'var(--sx-ink-2)' }}>{currency}</span></div>
+        </div>
+
+        <p className="text-[11px] mt-4 leading-relaxed" style={{ color: 'var(--sx-ink-3)' }}>
+          The real Razorpay popup couldn't open from this network (TLS interception by AV / proxy).
+          This mock confirms the rest of the flow — server-side verify, wallet credit, ledger entry — so you can demo end-to-end.
+        </p>
+
+        <button onClick={onPay} disabled={paying}
+          className="sx-btn sx-btn-primary w-full mt-5 py-4 text-base">
+          {paying ? 'Confirming…' : <>Simulate successful payment <ArrowRight size={16} /></>}
+        </button>
+      </div>
     </div>
   )
 }

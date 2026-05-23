@@ -27,19 +27,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Razorpay is not configured on the server' }, { status: 500 })
   }
 
-  // Verify HMAC SHA256 signature: hmac(order_id|payment_id, key_secret)
-  const expected = createHmac('sha256', keySecret)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex')
+  // ── Dev-mock bypass: signed IDs are prefixed with MOCK_, and we only honour
+  //    them when RAZORPAY_DEV_MOCK is explicitly enabled on the server.
+  const isMock = process.env.RAZORPAY_DEV_MOCK === '1'
+    && String(razorpay_order_id).startsWith('order_MOCK_')
+    && String(razorpay_payment_id).startsWith('pay_MOCK_')
 
-  const expectedBuf = Buffer.from(expected, 'utf8')
-  const actualBuf = Buffer.from(String(razorpay_signature), 'utf8')
+  if (!isMock) {
+    // Verify HMAC SHA256 signature: hmac(order_id|payment_id, key_secret)
+    const expected = createHmac('sha256', keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex')
 
-  const sigOk =
-    expectedBuf.length === actualBuf.length && timingSafeEqual(expectedBuf, actualBuf)
+    const expectedBuf = Buffer.from(expected, 'utf8')
+    const actualBuf = Buffer.from(String(razorpay_signature), 'utf8')
 
-  if (!sigOk) {
-    return NextResponse.json({ error: 'Signature verification failed' }, { status: 400 })
+    const sigOk =
+      expectedBuf.length === actualBuf.length && timingSafeEqual(expectedBuf, actualBuf)
+
+    if (!sigOk) {
+      return NextResponse.json({ error: 'Signature verification failed' }, { status: 400 })
+    }
   }
 
   // Credit the wallet

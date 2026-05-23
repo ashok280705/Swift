@@ -5,21 +5,24 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, ArrowLeftRight, History, LogOut, Shield, ArrowDownToLine, ArrowUpFromLine,
-  PiggyBank, Brain, TrendingUp, Menu, X, Copy, Check, Search, Bell, ChevronDown,
+  PiggyBank, Brain, TrendingUp, Menu, X, Copy, Check, Bell, ChevronDown, ScanLine,
+  FileSearch, Languages,
 } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 const PRIMARY = [
-  { href: '/dashboard',                 label: 'Overview',  icon: LayoutDashboard },
-  { href: '/dashboard/transfer',        label: 'Send',      icon: ArrowLeftRight  },
-  { href: '/dashboard/deposit',         label: 'Deposit',   icon: ArrowDownToLine },
-  { href: '/dashboard/withdraw',        label: 'Withdraw',  icon: ArrowUpFromLine },
-  { href: '/dashboard/savings',         label: 'Vault',     icon: PiggyBank       },
+  { href: '/dashboard',                 tKey: 'nav.overview',  icon: LayoutDashboard },
+  { href: '/dashboard/pay',             tKey: 'nav.pay',       icon: ScanLine        },
+  { href: '/dashboard/transfer',        tKey: 'nav.send',      icon: ArrowLeftRight  },
+  { href: '/dashboard/deposit',         tKey: 'nav.deposit',   icon: ArrowDownToLine },
+  { href: '/dashboard/withdraw',        tKey: 'nav.withdraw',  icon: ArrowUpFromLine },
+  { href: '/dashboard/savings',         tKey: 'nav.vault',     icon: PiggyBank       },
 ]
 
 const SECONDARY = [
-  { href: '/dashboard/history',         label: 'Activity',         icon: History    },
-  { href: '/dashboard/investments',     label: 'Markets',          icon: TrendingUp },
-  { href: '/dashboard/forex-predictor', label: 'Rate Intel',       icon: Brain      },
+  { href: '/dashboard/history',         tKey: 'nav.activity',   icon: History    },
+  { href: '/dashboard/investments',     tKey: 'nav.markets',    icon: TrendingUp },
+  { href: '/dashboard/forex-predictor', tKey: 'nav.rateintel',  icon: Brain      },
 ]
 
 /**
@@ -31,6 +34,7 @@ export default function Sidebar({
 }: { profile: any; mobileOpen?: boolean; setMobileOpen?: (v: boolean) => void }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { lang, setLang, t } = useLang()
   const [copied, setCopied] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -80,24 +84,24 @@ export default function Sidebar({
 
           {/* Primary nav */}
           <nav className="hidden lg:flex items-center gap-0.5 ml-4">
-            {PRIMARY.map(({ href, label, icon: Icon }) => (
+            {PRIMARY.map(({ href, tKey, icon: Icon }) => (
               <Link key={href} href={href} className="sx-nav-link" data-active={isActive(href)}>
-                <Icon size={16} /> {label}
+                <Icon size={16} /> {t(tKey)}
               </Link>
             ))}
             <span className="mx-1 h-5 w-px" style={{ background: 'var(--sx-line)' }} />
-            {SECONDARY.map(({ href, label, icon: Icon }) => (
+            {SECONDARY.map(({ href, tKey, icon: Icon }) => (
               <Link key={href} href={href} className="sx-nav-link" data-active={isActive(href)}>
-                <Icon size={16} /> {label}
+                <Icon size={16} /> {t(tKey)}
               </Link>
             ))}
             {profile?.role === 'admin' && (
               <>
                 <Link href="/admin" className="sx-nav-link" data-active={pathname === '/admin'}>
-                  <Shield size={16} /> Admin
+                  <Shield size={16} /> {t('nav.admin')}
                 </Link>
                 <Link href="/admin/ledger" className="sx-nav-link" data-active={pathname.startsWith('/admin/ledger')}>
-                  <Shield size={16} /> Ledger
+                  <FileSearch size={16} /> {t('nav.ledger')}
                 </Link>
               </>
             )}
@@ -105,14 +109,31 @@ export default function Sidebar({
 
           {/* Right cluster */}
           <div className="ml-auto flex items-center gap-2">
-            <button title="Search (coming soon)"
-              className="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm"
-              style={{ borderColor: 'var(--sx-line)', color: 'var(--sx-ink-3)' }}>
-              <Search size={14} /> <span className="hidden xl:inline">Quick search</span>
-              <kbd className="hidden xl:inline text-[10px] px-1.5 py-0.5 rounded border"
-                style={{ borderColor: 'var(--sx-line)' }}>⌘K</kbd>
-            </button>
-            <button className="hidden md:inline-flex relative p-2 rounded-xl border" title="Notifications"
+            {/* Language toggle (replaces the old Quick-search button) */}
+            <div className="hidden md:inline-flex items-center gap-1 p-1 rounded-xl border"
+                 style={{ borderColor: 'var(--sx-line)', background: 'var(--sx-panel)' }}
+                 role="group" aria-label="Language">
+              <Languages size={13} style={{ color: 'var(--sx-ink-3)', marginLeft: 4 }} />
+              {(['en', 'hi'] as const).map(l => {
+                const active = lang === l
+                return (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    aria-pressed={active}
+                    title={l === 'en' ? 'English' : 'हिन्दी'}
+                    className="text-xs font-bold px-2.5 py-1 rounded-lg transition"
+                    style={{
+                      background: active ? 'var(--sx-primary-soft)' : 'transparent',
+                      color: active ? 'var(--sx-primary)' : 'var(--sx-ink-3)',
+                    }}>
+                    {l === 'en' ? 'EN' : 'हिं'}
+                  </button>
+                )
+              })}
+            </div>
+
+            <button className="hidden md:inline-flex relative p-2 rounded-xl border" title={t('nav.notifications')}
               style={{ borderColor: 'var(--sx-line)', color: 'var(--sx-ink-2)' }}>
               <Bell size={16} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: 'var(--sx-coral)' }} />
@@ -126,7 +147,7 @@ export default function Sidebar({
                 <span className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-white font-bold text-xs"
                   style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%)' }}>{initials}</span>
                 <span className="hidden sm:flex flex-col items-start leading-tight">
-                  <span className="text-xs font-semibold" style={{ color: 'var(--sx-ink) ' }}>{profile?.full_name?.split(' ')[0] ?? 'Member'}</span>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--sx-ink) ' }}>{profile?.full_name?.split(' ')[0] ?? t('nav.member')}</span>
                   <span className="text-[10px] font-mono" style={{ color: 'var(--sx-ink-3)' }}>{profile?.rm_id}</span>
                 </span>
                 <ChevronDown size={14} style={{ color: 'var(--sx-ink-3)' }} />
@@ -137,19 +158,39 @@ export default function Sidebar({
                      style={{ borderColor: 'var(--sx-line)', background: 'var(--sx-panel)' }}>
                   <div className="p-3 rounded-xl mb-2"
                        style={{ background: 'var(--sx-primary-soft)' }}>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sx-ink-3)' }}>SwiftX ID</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--sx-ink-3)' }}>{t('nav.swiftxid')}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-mono font-bold tracking-wider" style={{ color: 'var(--sx-primary)' }}>{profile?.rm_id}</span>
                       <button onClick={copyRm} className="ml-auto p-1.5 rounded-lg hover:bg-white/40"
-                        title="Copy SwiftX ID" style={{ color: 'var(--sx-primary)' }}>
+                        title={t('nav.copyid')} style={{ color: 'var(--sx-primary)' }}>
                         {copied ? <Check size={14} /> : <Copy size={14} />}
                       </button>
                     </div>
                   </div>
+
+                  {/* Mobile-only language toggle inside the menu */}
+                  <div className="md:hidden flex items-center gap-1 p-1 rounded-xl border mb-1"
+                       style={{ borderColor: 'var(--sx-line)' }}>
+                    <Languages size={13} style={{ color: 'var(--sx-ink-3)', marginLeft: 4 }} />
+                    {(['en', 'hi'] as const).map(l => {
+                      const active = lang === l
+                      return (
+                        <button key={l} onClick={() => setLang(l)}
+                          className="flex-1 text-xs font-bold px-2.5 py-1.5 rounded-lg transition"
+                          style={{
+                            background: active ? 'var(--sx-primary-soft)' : 'transparent',
+                            color: active ? 'var(--sx-primary)' : 'var(--sx-ink-3)',
+                          }}>
+                          {l === 'en' ? 'English' : 'हिन्दी'}
+                        </button>
+                      )
+                    })}
+                  </div>
+
                   <button onClick={signOut}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-red-50"
                     style={{ color: '#be123c' }}>
-                    <LogOut size={16} /> Sign out
+                    <LogOut size={16} /> {t('nav.signout')}
                   </button>
                 </div>
               )}
@@ -168,12 +209,17 @@ export default function Sidebar({
         {mobileOpen && (
           <div className="lg:hidden border-t" style={{ borderColor: 'var(--sx-line)', background: 'var(--sx-panel)' }}>
             <nav className="px-4 py-3 grid grid-cols-2 gap-1.5">
-              {[...PRIMARY, ...SECONDARY, ...(profile?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Shield }] : [])]
-                .map(({ href, label, icon: Icon }) => (
-                  <Link key={href} href={href} className="sx-nav-link" data-active={isActive(href)}>
-                    <Icon size={16} />{label}
-                  </Link>
-                ))}
+              {[
+                ...PRIMARY,
+                ...SECONDARY,
+                ...(profile?.role === 'admin'
+                  ? [{ href: '/admin', tKey: 'nav.admin', icon: Shield }, { href: '/admin/ledger', tKey: 'nav.ledger', icon: FileSearch }]
+                  : []),
+              ].map(({ href, tKey, icon: Icon }) => (
+                <Link key={href} href={href} className="sx-nav-link" data-active={isActive(href)}>
+                  <Icon size={16} />{t(tKey)}
+                </Link>
+              ))}
             </nav>
           </div>
         )}

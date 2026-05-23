@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { Globe2, ShieldCheck, Zap, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { t } = useLang()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
@@ -52,23 +54,23 @@ export default function LoginPage() {
 
         <div className="space-y-6 max-w-md">
           <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight">
-            Money that crosses borders<br />as fast as a message.
+            {t('auth.borderless')}
           </h2>
           <p className="text-white/75 text-base leading-relaxed">
-            Move funds across 50+ currencies, lock in real-time forex rates, and grow what you keep — all from one borderless workspace.
+            {t('auth.bordersub')}
           </p>
 
           <div className="grid grid-cols-1 gap-3 pt-4">
             {[
-              { icon: Globe2,      title: 'Global reach',  body: 'Pay anyone in 180+ countries instantly.' },
-              { icon: Zap,         title: 'Lightning fast', body: 'Settle most transfers in under 60 seconds.' },
-              { icon: ShieldCheck, title: 'Bank-grade trust', body: 'Encryption, KYC, and 24/7 fraud watch.' },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex items-start gap-3 p-3 rounded-2xl bg-white/8 border border-white/10 backdrop-blur-sm">
+              { icon: Globe2,      titleK: 'auth.feat.global.t', bodyK: 'auth.feat.global.b' },
+              { icon: Zap,         titleK: 'auth.feat.fast.t',   bodyK: 'auth.feat.fast.b'   },
+              { icon: ShieldCheck, titleK: 'auth.feat.trust.t',  bodyK: 'auth.feat.trust.b'  },
+            ].map(({ icon: Icon, titleK, bodyK }) => (
+              <div key={titleK} className="flex items-start gap-3 p-3 rounded-2xl bg-white/8 border border-white/10 backdrop-blur-sm">
                 <div className="p-2 rounded-xl bg-white/15"><Icon size={18} /></div>
                 <div>
-                  <p className="font-semibold text-sm">{title}</p>
-                  <p className="text-xs text-white/65">{body}</p>
+                  <p className="font-semibold text-sm">{t(titleK)}</p>
+                  <p className="text-xs text-white/65">{t(bodyK)}</p>
                 </div>
               </div>
             ))}
@@ -76,7 +78,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-xs text-white/60">
-          © {new Date().getFullYear()} SwiftX Inc. · Borderless finance for everyone.
+          © {new Date().getFullYear()} SwiftX Inc. · {t('auth.copyright')}
         </div>
       </aside>
 
@@ -88,9 +90,9 @@ export default function LoginPage() {
             <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--sx-ink)' }}>SwiftX</span>
           </div>
 
-          <p className="sx-h-eyebrow">Welcome back</p>
-          <h1 className="sx-h-title mt-2">Sign in to your workspace</h1>
-          <p className="sx-h-sub mt-1.5">Pick up exactly where you left off.</p>
+          <p className="sx-h-eyebrow">{t('auth.welcomeback')}</p>
+          <h1 className="sx-h-title mt-2">{t('auth.signin.title')}</h1>
+          <p className="sx-h-sub mt-1.5">{t('auth.signin.desc')}</p>
 
           <form onSubmit={handleLogin} className="mt-10 space-y-4">
             {error && (
@@ -106,7 +108,7 @@ export default function LoginPage() {
                 placeholder=" "
                 value={email} onChange={e => setEmail(e.target.value)}
               />
-              <label htmlFor="sx-email">Email address</label>
+              <label htmlFor="sx-email">{t('auth.email')}</label>
             </div>
 
             <div className="sx-field">
@@ -115,7 +117,7 @@ export default function LoginPage() {
                 placeholder=" "
                 value={password} onChange={e => setPassword(e.target.value)}
               />
-              <label htmlFor="sx-pass">Password</label>
+              <label htmlFor="sx-pass">{t('auth.password')}</label>
               <button type="button" onClick={() => setShowPwd(v => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-black/5"
                 style={{ color: 'var(--sx-ink-3)' }} aria-label="Toggle password">
@@ -124,21 +126,21 @@ export default function LoginPage() {
             </div>
 
             <button type="submit" disabled={loading} className="sx-btn sx-btn-primary w-full py-3.5 text-[15px]">
-              {loading ? 'Signing you in…' : <>Continue to SwiftX <ArrowRight size={16} /></>}
+              {loading ? t('auth.signing') : <>{t('auth.continue')} <ArrowRight size={16} /></>}
             </button>
 
             <p className="text-center text-sm pt-2" style={{ color: 'var(--sx-ink-3)' }}>
-              New to SwiftX?{' '}
+              {t('auth.newto')}{' '}
               <Link href="/register" className="font-semibold" style={{ color: 'var(--sx-primary)' }}>
-                Create an account
+                {t('auth.createaccount')}
               </Link>
             </p>
           </form>
 
           <div className="mt-12 pt-6 border-t flex items-center justify-between text-xs"
                style={{ borderColor: 'var(--sx-line)', color: 'var(--sx-ink-3)' }}>
-            <span>Need help signing in?</span>
-            <span className="flex items-center gap-1.5"><span className="sx-pulse-dot" /> All systems normal</span>
+            <span>{t('auth.needhelp')}</span>
+            <span className="flex items-center gap-1.5"><span className="sx-pulse-dot" /> {t('auth.allsystems')}</span>
           </div>
         </div>
       </section>

@@ -1,8 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { PiggyBank, CheckCircle2, AlertTriangle, TrendingUp, Sparkles } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 export default function SavingsPage() {
+  const { t } = useLang()
   const [savingsBalance, setSavingsBalance] = useState(0)
   const [inrBalance, setInrBalance] = useState(0)
   const [action, setAction] = useState<'deposit' | 'withdraw'>('deposit')
@@ -43,9 +45,9 @@ export default function SavingsPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <header className="mb-8">
-        <p className="sx-h-eyebrow">SwiftX Vault</p>
-        <h1 className="sx-h-title mt-2">Grow your idle balance</h1>
-        <p className="sx-h-sub mt-1">Earn 6.5% APY on parked funds — no lock-ins, no penalties.</p>
+        <p className="sx-h-eyebrow">{t('vault.eyebrow')}</p>
+        <h1 className="sx-h-title mt-2">{t('vault.title')}</h1>
+        <p className="sx-h-sub mt-1">{t('vault.desc')}</p>
       </header>
 
       <div className="grid lg:grid-cols-[1.3fr_1fr] gap-6">
@@ -62,7 +64,7 @@ export default function SavingsPage() {
               <PiggyBank size={120} />
             </div>
             <span className="sx-pill" style={{ background: 'rgba(255,255,255,0.18)', color: '#fff' }}>
-              Vault balance
+              {t('vault.balance')}
             </span>
             <p className="mt-3 text-5xl font-extrabold tracking-tight">
               ₹{Number(savingsBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -88,7 +90,7 @@ export default function SavingsPage() {
                     color: action === a ? 'var(--sx-primary)' : 'var(--sx-ink-3)',
                     boxShadow: action === a ? 'var(--sx-shadow-1)' : 'none',
                   }}>
-                  {a === 'deposit' ? 'Move to Vault' : 'Move to Wallet'}
+                  {a === 'deposit' ? t('vault.move.in') : t('vault.move.out')}
                 </button>
               ))}
             </div>

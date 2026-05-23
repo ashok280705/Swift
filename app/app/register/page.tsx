@@ -3,16 +3,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, Eye, EyeOff, Sparkles, BadgeCheck, Wallet } from 'lucide-react'
+import { useLang } from '@/lib/i18n'
 
 const FIELDS = [
-  { label: 'Full name',   key: 'full_name', type: 'text'     },
-  { label: 'Email address', key: 'email',   type: 'email'    },
-  { label: 'Phone (optional)', key: 'phone', type: 'tel'     },
-  { label: 'Create a password', key: 'password', type: 'password' },
+  { tKey: 'auth.fullname',  key: 'full_name', type: 'text'     },
+  { tKey: 'auth.email',     key: 'email',     type: 'email'    },
+  { tKey: 'auth.phone',     key: 'phone',     type: 'tel'      },
+  { tKey: 'auth.createpwd', key: 'password',  type: 'password' },
 ] as const
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t } = useLang()
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '' })
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState('')
@@ -45,9 +47,9 @@ export default function RegisterPage() {
             <span className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--sx-ink)' }}>SwiftX</span>
           </div>
 
-          <p className="sx-h-eyebrow">Create your account</p>
-          <h1 className="sx-h-title mt-2">Join the borderless economy</h1>
-          <p className="sx-h-sub mt-1.5">Set up your SwiftX workspace in under a minute.</p>
+          <p className="sx-h-eyebrow">{t('auth.reg.eyebrow')}</p>
+          <h1 className="sx-h-title mt-2">{t('auth.reg.title')}</h1>
+          <p className="sx-h-sub mt-1.5">{t('auth.reg.desc')}</p>
 
           <form onSubmit={handleRegister} className="mt-8 space-y-4">
             {error && (
@@ -57,7 +59,7 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {FIELDS.map(({ label, key, type }) => {
+            {FIELDS.map(({ tKey, key, type }) => {
               const isPwd = key === 'password'
               const inputType = isPwd ? (showPwd ? 'text' : 'password') : type
               return (
@@ -68,7 +70,7 @@ export default function RegisterPage() {
                     onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                     required={key !== 'phone'}
                   />
-                  <label htmlFor={`sx-${key}`}>{label}</label>
+                  <label htmlFor={`sx-${key}`}>{t(tKey)}</label>
                   {isPwd && (
                     <button type="button" onClick={() => setShowPwd(v => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-black/5"
@@ -81,17 +83,17 @@ export default function RegisterPage() {
             })}
 
             <p className="text-xs leading-relaxed pt-1" style={{ color: 'var(--sx-ink-3)' }}>
-              By continuing you agree to SwiftX's Terms of Service and acknowledge our Privacy Policy.
+              {t('auth.terms')}
             </p>
 
             <button type="submit" disabled={loading} className="sx-btn sx-btn-primary w-full py-3.5 text-[15px]">
-              {loading ? 'Creating your workspace…' : <>Create my SwiftX account <ArrowRight size={16} /></>}
+              {loading ? t('auth.creating') : <>{t('auth.createbtn')} <ArrowRight size={16} /></>}
             </button>
 
             <p className="text-center text-sm pt-2" style={{ color: 'var(--sx-ink-3)' }}>
-              Already with us?{' '}
+              {t('auth.alreadyhave')}{' '}
               <Link href="/login" className="font-semibold" style={{ color: 'var(--sx-primary)' }}>
-                Sign in instead
+                {t('auth.signinhere')}
               </Link>
             </p>
           </form>
@@ -118,10 +120,10 @@ export default function RegisterPage() {
 
         <div className="space-y-6 max-w-md ml-auto text-right">
           <h2 className="text-4xl font-extrabold leading-[1.1] tracking-tight">
-            One wallet.<br />Every currency.<br />Zero friction.
+            {t('auth.reg.h1')}<br />{t('auth.reg.h2')}<br />{t('auth.reg.h3')}
           </h2>
           <p className="text-white/75 text-base leading-relaxed">
-            Open a SwiftX workspace and unlock multi-currency wallets, AI-powered insights, and instant remittance — all under one roof.
+            {t('auth.reg.sub')}
           </p>
 
           <div className="grid grid-cols-1 gap-3 pt-4">
