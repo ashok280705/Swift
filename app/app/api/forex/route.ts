@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getLiveRate, getConversionQuote } from '@/lib/forex'
+import { getLiveRate, getConversionQuote, DEFAULT_BANK_FEE_RATE } from '@/lib/forex'
 import { createClient } from '@/lib/supabase/server'
+import { adminClient } from '@/lib/supabase/admin'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -13,7 +14,14 @@ export async function GET(req: NextRequest) {
   const amount = parseFloat(searchParams.get('amount') ?? '0')
 
   if (amount > 0) {
-    const quote = await getConversionQuote(base, target, amount)
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('bank_fee_rate')
+      .eq('id', user.id)
+      .single()
+
+    const bankFeeRate = Number(profile?.bank_fee_rate ?? DEFAULT_BANK_FEE_RATE)
+    const quote = await getConversionQuote(base, target, amount, bankFeeRate)
     return NextResponse.json(quote)
   }
 

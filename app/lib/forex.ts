@@ -2,7 +2,13 @@ import axios from 'axios'
 import { adminClient } from '@/lib/supabase/admin'
 
 const CACHE_TTL_MS = 5 * 60 * 1000
-const FEE_RATE = 0.005
+
+// Razorpay charges a flat 2% on every payout we route through them.
+export const RAZORPAY_FEE_RATE = 0.02
+
+// Bank-processing rate is set per-account at signup (0.0025–0.0052).
+// Fallback used only when an account doesn't yet have one assigned.
+export const DEFAULT_BANK_FEE_RATE = 0.0035
 
 export const CURRENCIES: Record<string, string> = {
   INR: '🇮🇳 Indian Rupee',
@@ -118,15 +124,35 @@ async function fetchFromApi(base: string, target: string): Promise<number> {
   return (usdRates[target] ?? 1) / (usdRates[base] ?? 1)
 }
 
-export function calculateFee(amount: number): number {
-  return Math.round(amount * FEE_RATE * 100) / 100
-}
+function round2(n: number) { return Math.round(n * 100) / 100 }
 
-export async function getConversionQuote(base: string, target: string, amount: number) {
+export async function getConversionQuote(
+  base: string,
+  target: string,
+  amount: number,
+  bankFeeRate: number = DEFAULT_BANK_FEE_RATE,
+) {
   const rate = await getLiveRate(base, target)
-  const fee = calculateFee(amount)
-  const converted = Math.round((amount - fee) * rate * 1000000) / 1000000
-  return { rate, fee, converted, base, target, amount }
+
+  const razorpay_fee = round2(amount * RAZORPAY_FEE_RATE)
+  const bank_fee     = round2(amount * bankFeeRate)
+  const fee          = round2(razorpay_fee + bank_fee)         // combined fee
+
+  // Recipient receives the full amount converted at live rate.
+  // The fees are paid by the sender on top of the send amount.
+  const converted = Math.round(amount * rate * 1000000) / 1000000
+
+  return {
+    rate,
+    fee,
+    razorpay_fee,
+    bank_fee,
+    bank_fee_rate: bankFeeRate,
+    converted,
+    base,
+    target,
+    amount,
+  }
 }
 
 export function getCurrencyList() {

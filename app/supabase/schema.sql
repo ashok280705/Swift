@@ -23,6 +23,7 @@ create table if not exists profiles (
   kyc_status   text default 'pending' check (kyc_status in ('pending','verified','rejected')),
   role         text default 'user' check (role in ('user','admin')),
   is_frozen    boolean default false,
+  bank_fee_rate numeric(6, 5) default round((0.0025 + random() * 0.0027)::numeric, 5),
   created_at   timestamptz default now(),
   updated_at   timestamptz default now()
 );

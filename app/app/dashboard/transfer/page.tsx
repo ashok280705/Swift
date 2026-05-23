@@ -2,7 +2,16 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle2, AlertTriangle, ArrowDown, User2, ShieldCheck, Send } from 'lucide-react'
 
-type Quote = { rate: number; fee: number; converted: number; base: string; target: string }
+type Quote = {
+  rate: number
+  fee: number
+  razorpay_fee: number
+  bank_fee: number
+  bank_fee_rate: number
+  converted: number
+  base: string
+  target: string
+}
 type Summary = {
   txn_ref: string; sender_rm_id: string; receiver_rm_id: string
   source_amount: number; source_currency: string
@@ -137,8 +146,14 @@ export default function TransferPage() {
           {quote && (
             <div className="mt-5 rounded-xl p-4 space-y-2"
                  style={{ background: 'var(--sx-panel-2)', border: '1px dashed var(--sx-line)' }}>
-              <Row label="Exchange rate" value={`1 ${quote.base} = ${quote.rate.toFixed(4)} ${quote.target}`} />
-              <Row label="Platform fee" value={`${quote.base} ${quote.fee.toFixed(2)}`} />
+              <Row label="Live exchange rate" value={`1 ${quote.base} = ${quote.rate.toFixed(4)} ${quote.target}`} />
+              <Row label="Razorpay fee (2%)" value={`${quote.base} ${quote.razorpay_fee.toFixed(2)}`} />
+              <Row
+                label={`Bank processing (${(quote.bank_fee_rate * 100).toFixed(2)}%)`}
+                value={`${quote.base} ${quote.bank_fee.toFixed(2)}`}
+              />
+              <div className="pt-2 mt-1 border-t" style={{ borderColor: 'var(--sx-line)' }} />
+              <Row label="Total deducted from wallet" value={`${quote.base} ${(Number(form.amount) + quote.fee).toFixed(2)}`} />
               <Row label="Arrives in" value="~60 seconds" mute />
             </div>
           )}
@@ -240,7 +255,7 @@ function TransferReceipt({ summary, onNew }: { summary: Summary; onNew: () => vo
             ['Amount sent', `${sym(summary.source_currency)}${summary.source_amount.toLocaleString()}`],
             ['Recipient gets', `${sym(summary.target_currency)}${summary.target_amount.toFixed(4)}`],
             ['Rate', `1 ${summary.source_currency} = ${summary.fx_rate.toFixed(4)} ${summary.target_currency}`],
-            ['Fee', `${sym(summary.source_currency)}${summary.fee_amount.toFixed(2)}`],
+            ['Fees (Razorpay + Bank)', `${sym(summary.source_currency)}${summary.fee_amount.toFixed(2)}`],
             ['Status', summary.status.toUpperCase()],
             ['Timestamp', new Date(summary.timestamp).toLocaleString()],
           ].map(([k, v]) => (

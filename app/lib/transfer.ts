@@ -29,7 +29,7 @@ export async function initiateTransfer({
   // Validate sender
   const { data: sender } = await adminClient
     .from('profiles')
-    .select('id, rm_id, kyc_status, is_frozen')
+    .select('id, rm_id, kyc_status, is_frozen, bank_fee_rate')
     .eq('id', senderId)
     .single()
 
@@ -42,8 +42,11 @@ export async function initiateTransfer({
   if (recipient.is_frozen) return { summary: null!, error: 'Recipient account is frozen' }
   if (sender.id === recipient.id) return { summary: null!, error: 'Cannot transfer to yourself' }
 
-  // Get conversion quote
-  const { rate, fee, converted } = await getConversionQuote(sourceCurrency, targetCurrency, amount)
+  // Get conversion quote — per-account bank fee + flat Razorpay fee
+  const bankFeeRate = Number(sender.bank_fee_rate ?? 0.0035)
+  const { rate, fee, converted } = await getConversionQuote(
+    sourceCurrency, targetCurrency, amount, bankFeeRate,
+  )
 
   // Execute atomic transfer via DB function
   const { data: txnId, error: txnErr } = await adminClient.rpc('execute_transfer', {
