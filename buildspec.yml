@@ -1,0 +1,50 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: "production"
+    PORT: "3000"
+    # IMPORTANT: Define non-sensitive environment variables here.
+    # For sensitive variables (e.g., Database URLs, API Keys), 
+    # use AWS Systems Manager Parameter Store or Secrets Manager.
+    # Example:
+    # parameter-store:
+    #   SUPABASE_URL: "/crossremit/prod/supabase_url"
+    #   SUPABASE_ANON_KEY: "/crossremit/prod/supabase_anon_key"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - echo "Installing dependencies..."
+      - cd app
+      # Clean install of dependencies
+      - npm ci
+  build:
+    commands:
+      - echo "Building Next.js application in standalone mode..."
+      - npm run build
+  post_build:
+    commands:
+      - echo "Preparing lightweight deployment artifact..."
+      - cd ..
+      - mkdir -p deployment_dist
+      
+      # Copy the standalone output which includes ONLY production dependencies
+      - cp -a app/.next/standalone/. deployment_dist/
+      
+      # The standalone build does not include public and static assets by default.
+      # We must copy them manually to the correct path inside the artifact.
+      - mkdir -p deployment_dist/.next
+      - cp -r app/.next/static deployment_dist/.next/static
+      - cp -r app/public deployment_dist/public
+      
+      # Copy CodeDeploy configuration and lifecycle scripts
+      - cp appspec.yml deployment_dist/
+      - cp -r scripts deployment_dist/
+
+artifacts:
+  base-directory: deployment_dist
+  files:
+    - '**/*'

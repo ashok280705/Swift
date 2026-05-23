@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  crossremit-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crossremit-web
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Application environment variables
+      - NODE_ENV=production
+      - PORT=3000
+      
+      # IMPORTANT: Instead of hardcoding sensitive variables here,
+      # you can load them automatically from a .env file located in 
+      # the same directory as this docker-compose.yml file.
+      # To do that, uncomment the env_file line below:
+      
+      # env_file:
+      #   - .env
