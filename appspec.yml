@@ -1,5 +1,6 @@
 version: 0.0
 os: linux
+<<<<<<< HEAD
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AWS CodeDeploy – appspec for Swift / CrossRemit
@@ -32,10 +33,23 @@ permissions:
     owner: ec2-user
     group: ec2-user
     mode: "755"
+=======
+files:
+  - source: /
+    destination: /home/ec2-user/crossremit-app
+    overwrite: true
+
+permissions:
+  - object: /home/ec2-user/crossremit-app
+    pattern: "**"
+    owner: ec2-user
+    group: ec2-user
+>>>>>>> 17f926a04b4289f85e6fd5adb8b6424b82bf9981
 
 hooks:
   ApplicationStop:
     - location: scripts/application_stop.sh
+<<<<<<< HEAD
       timeout: 60
       runas: root
 
@@ -57,4 +71,19 @@ hooks:
   ValidateService:
     - location: scripts/validate_service.sh
       timeout: 60
+=======
+      timeout: 300
+      runas: root
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: scripts/after_install.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: scripts/application_start.sh
+      timeout: 300
+>>>>>>> 17f926a04b4289f85e6fd5adb8b6424b82bf9981
       runas: root

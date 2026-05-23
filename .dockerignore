@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies (reinstalled inside Docker)
 **/node_modules
 
@@ -32,3 +33,18 @@ buildspec.yml
 appspec.yml
 scripts/
 deployment_dist/
+=======
+node_modules
+npm-debug.log
+.next
+.git
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.DS_Store
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+>>>>>>> 17f926a04b4289f85e6fd5adb8b6424b82bf9981
